@@ -1,6 +1,8 @@
-use front::stdlib::value::{Value, ResultValue, VNumber, VInteger, to_value, from_value};
+use front::stdlib::value::{Value, ResultValue, to_value, from_value};
+use front::stdlib::value::ValueData::*;
+use serialize::json::from_str;
 use front::stdlib::function::Function;
-use std::f64::{NAN, MAX_VALUE, MIN_VALUE, INFINITY, NEG_INFINITY, EPSILON};
+use std::f64::{NAN, MAX, MIN, INFINITY, NEG_INFINITY, EPSILON};
 /// Parse a float into a value
 pub fn parse_float(args:Vec<Value>, _:Value, _:Value, _:Value) -> ResultValue {
     let parsed = from_str::<f64>(from_value::<String>(args[0]).unwrap().as_slice());
@@ -60,8 +62,8 @@ pub fn strict_is_nan(args:Vec<Value>, _:Value, _:Value, _:Value) -> ResultValue 
 pub fn _create(global:Value) -> Value {
     js!(global, {
         "NaN": NAN,
-        "MAX_VALUE": MAX_VALUE,
-        "MIN_VALUE": MIN_VALUE,
+        "MAX_VALUE": MAX,
+        "MIN_VALUE": MIN,
         "POSITIVE_INFINITY": INFINITY,
         "NEGATIVE_INFINITY": NEG_INFINITY,
         "EPSILON": EPSILON,

@@ -1,5 +1,5 @@
-use std::fmt::{Formatter, Result, Show};
-#[deriving(PartialEq, Clone)]
+use std::fmt::{Formatter, Result, Display};
+#[derive(PartialEq, Clone)]
 /// Punctuation
 pub enum Punctuator {
     /// `{`
@@ -36,7 +36,7 @@ pub enum Punctuator {
     PStrictEq,
     /// `!==`
     PStrictNotEq,
-    /// `+` 
+    /// `+`
     PAdd,
     /// `-`
     PSub,
@@ -101,7 +101,7 @@ pub enum Punctuator {
     /// `=>`
     PArrow
 }
-impl Show for Punctuator {
+impl Display for Punctuator {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "{}", match *self {
             POpenBlock => "{",

@@ -10,9 +10,10 @@
 //! A Javascript execution command line tool
 
 extern crate js;
-extern crate collections;
 extern crate getopts;
-extern crate jit;
+extern crate percent_encoding;
+//extern crate jit;
+extern crate llvm_rs;
 #[phase(plugin, link)]
 extern crate log;
 /// Interactive mode

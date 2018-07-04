@@ -1,7 +1,10 @@
-use collections::TreeMap;
+use std::collections::btree_map::BTreeMap;
+use syntax::ast::op::BinOp::*;
 use syntax::ast::expr::*;
 use syntax::ast::op::*;
 use syntax::ast::constant::Const;
+use syntax::ast::op::UnaryOp::*;
+use syntax::ast::expr::ExprDef::*;
 /**
  * A compiler that transforms expressions into their compiled
  * form, typically through a library such as LibJIT or LLVM.
@@ -9,7 +12,7 @@ use syntax::ast::constant::Const;
 pub trait Compiler<'a, Compiled> {
     /// Compile an expression
     fn compile(&'a self, expr:&Expr) -> Compiled {
-        debug!("Compiling {}", expr);
+        print!("Compiling {}", expr);
         match expr.def.clone() {
             UnaryOpExpr(op, box ex) =>
                 self.compile_unary_op(op, &ex),
@@ -121,7 +124,7 @@ pub trait Compiler<'a, Compiled> {
         unimplemented!()
     }
     /// Compile an object declaration
-    fn compile_object_decl(&'a self, &TreeMap<String, Expr>) -> Compiled {
+    fn compile_object_decl(&'a self, &BTreeMap<String, Expr>) -> Compiled {
         unimplemented!()
     }
     /// Compile an array declaration

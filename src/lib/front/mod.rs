@@ -1,6 +1,6 @@
 #[macro_escape]
 /// A macro which makes Javascript objects with pretty Rust syntax
-pub mod macro;
+pub mod jsmacro;
 /// Backend-defining traits
 pub mod run;
 /// The Javascript standard library

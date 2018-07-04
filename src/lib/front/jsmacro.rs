@@ -12,7 +12,7 @@ macro_rules! js(
 	($inp:expr) => (
 		to_value($inp)
 	);
-)
+);
 #[macro_export]
 macro_rules! js_extend(
 	($object:expr, {$name:expr: $value:expr}) => (
@@ -26,4 +26,4 @@ macro_rules! js_extend(
 			object.set_field($name, js!($value));
 		)+
 	});
-)
+);

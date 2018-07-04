@@ -2,8 +2,10 @@ use front::run::compiler::Compiler;
 use syntax::ast::constant::*;
 use syntax::ast::op::*;
 use syntax::ast::expr::Expr;
+use syntax::ast::constant::Const::*;
+use syntax::ast::op::CompOp::*;
 use jit::{
-    Context,
+//    Context,
     Compile,
     Function,
     Value,
@@ -16,6 +18,12 @@ use jit::{
     Float64,
     Pointer
 };
+// TODO: convert to llvm
+use llvm_rs::{
+    Context,
+    Module
+};
+
 type CompiledValue<'a> = (Value<'a>, &'a Function<'a>);
 /// A compiler using the LibJIT backend
 pub struct JitCompiler<'a> {
@@ -24,13 +32,14 @@ pub struct JitCompiler<'a> {
 impl<'a> JitCompiler<'a> {
     /// Construct a new JIT Compiler on the given context
     pub fn new(context: &'a Context) -> JitCompiler<'a> {
-        let main_t = get_type::<fn(*mut int, *mut int, *mut int) -> *mut int>();
+        let main_t = Type::get::<fn(f64, f64) -> f64>();
+        let module = Module::new("add", &context);
         JitCompiler {
-            curr: Function::new(context, main_t)
+            curr: module.add_function("add", main_t)
         }
     }
     fn convert_bool(&'a self, val:Value<'a>) -> Value<'a> {
-        let bool_t = get_type::<bool>();
+        let bool_t = Type::get::<bool>();
         let val_kind = val.get_type().get_kind();
         let convert = |v| self.curr.insn_convert(&v, bool_t.clone(), false);
         match val_kind {
@@ -42,18 +51,18 @@ impl<'a> JitCompiler<'a> {
                 convert(not_zero & not_nan)
             },
             Int | UInt | NInt | NUInt => {
-                let zero = 0i.compile(&self.curr); 
+                let zero = i.compile(&self.curr);
                 convert(self.curr.insn_neq(&val, &zero))
             },
             Pointer => {
-                let one = 1i.compile(&self.curr);
+                let one = i.compile(&self.curr);
                 convert(self.curr.insn_gt(&val, &one))
             },
             _ => convert(val)
         }
     }
     fn undefined(&'a self) -> Value<'a> {
-        let ptr = Value::new(&self.curr, get_type::<&int>());
+        let ptr = Value::new(&self.curr, get_type::<&u64>());
         let val = 0u8.compile(&self.curr);
         self.curr.insn_store(&ptr, &val);
         ptr
@@ -71,7 +80,7 @@ impl<'a> Compiler<'a, (Value<'a>, &'a Function<'a>)> for JitCompiler<'a> {
             CBool(v) =>
                 v.compile(&self.curr),
             CNull => {
-                let ptr = Value::new(&self.curr, get_type::<&int>());
+                let ptr = Value::new(&self.curr, get_type::<&u64>());
                 let val = 1u8.compile(&self.curr);
                 self.curr.insn_store(&ptr, &val);
                 ptr

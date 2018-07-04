@@ -4,9 +4,32 @@ use syntax::ast::constant::*;
 use syntax::ast::op::*;
 use syntax::ast::punc::*;
 use syntax::ast::keyword::*;
-use collections::treemap::TreeMap;
+use std::collections::btree_map::BTreeMap;
 use std::fmt;
 use std::vec::Vec;
+use self::TokenData::*;
+use syntax::ast::constant::Const::{CBool, CString, CNum, CNull, CUndefined};
+use syntax::ast::expr::ExprDef::{ThrowExpr, ConstExpr, ArrayDeclExpr, ObjectDeclExpr, BlockExpr, GetConstFieldExpr, BinOpExpr};
+use syntax::ast::op::UnaryOp::{UnaryNot, UnaryPlus, UnaryMinus, UnaryIncrementPre, UnaryIncrementPost, UnaryDecrementPost, UnaryDecrementPre};
+use syntax::ast::expr::ExprDef::{WhileLoopExpr, TypeOfExpr, VarDeclExpr, ReturnExpr, ConstructExpr, SwitchExpr, FunctionDeclExpr, CallExpr, IfExpr, GetFieldExpr, AssignExpr, UnaryOpExpr, LocalExpr};
+use syntax::ast::op::CompOp::{
+    CompStrictEqual,
+    CompEqual,
+    CompStrictNotEqual,
+    CompNotEqual,
+    CompGreaterThan,
+    CompLessThan,
+    CompLessThanOrEqual,
+    CompGreaterThanOrEqual};
+use syntax::ast::op::BinOp::{BinNum, BinBit, BinLog, BinComp};
+use syntax::ast::op::BitOp::{BitShr, BitShl, BitOr, BitAnd, BitXor};
+use syntax::ast::op::LogOp::{LogOr, LogAnd};
+use syntax::ast::op::NumOp::{OpMul, OpAdd, OpDiv, OpMod, OpSub};
+use syntax::ast::expr::ExprDef::ArrowFunctionDeclExpr;
+use syntax::parser::ParseError::{UnexpectedKeyword, AbruptEnd, Expected, ExpectedExpr};
+use syntax::ast::punc::Punctuator::{POpenParen, PNot, POpenBlock, PNeg, PArrow, PCloseBlock, PCloseParen, PComma, PCloseBracket, PColon, PSemicolon};
+use syntax::ast::keyword::Keyword::{KCase, KElse, KDefault};
+
 macro_rules! mk (
     ($this:expr, $def:expr) => (
         Expr::new($def, try!($this.get_token($this.pos - 1)).pos, try!($this.get_token($this.pos - 1)).pos)
@@ -14,8 +37,8 @@ macro_rules! mk (
     ($this:expr, $def:expr, $first:expr) => (
         Expr::new($def, $first.pos, try!($this.get_token($this.pos - 1)).pos)
     );
-)
-#[deriving(Clone, PartialEq)]
+);
+#[derive(Clone, PartialEq)]
 /// An error encountered during parsing an expression
 pub enum ParseError {
     /// When it expected a certain kind of token, but got another as part of something
@@ -27,7 +50,7 @@ pub enum ParseError {
     /// When there is an abrupt end to the parsing
     AbruptEnd
 }
-impl fmt::Show for ParseError {
+impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Expected(ref wanted, ref got, ref routine) if wanted.len() == 0 => write!(f, "{}:{}: Expected expression for {}, got {}", got.pos.line_number, got.pos.column_number, routine, got.data),
@@ -59,7 +82,7 @@ pub struct Parser {
     /// The tokens being input
     tokens: Vec<Token>,
     /// The current position within the tokens
-    pos: uint
+    pos: u64
 }
 impl Parser {
     #[inline(always)]
@@ -321,16 +344,16 @@ impl Parser {
             },
             TPunctuator(POpenBlock) if try!(self.get_token(self.pos)).data == TPunctuator(PCloseBlock) => {
                 self.pos += 1;
-                mk!(self, ObjectDeclExpr(box TreeMap::new()), token)
+                mk!(self, ObjectDeclExpr(box BTreeMap::new()), token)
             },
             TPunctuator(POpenBlock) if try!(self.get_token(self.pos + 1)).data == TPunctuator(PColon) => {
-                let mut map = box TreeMap::new();
+                let mut map = box BTreeMap::new();
                 while try!(self.get_token(self.pos - 1)).data == TPunctuator(PComma) || map.len() == 0 {
                     let tk = try!(self.get_token(self.pos));
                     let name = match tk.data {
                         TIdentifier(ref id) => id.clone(),
                         TStringLiteral(ref str) => str.clone(),
-                        _ => return Err(Expected(vec!(TIdentifier("identifier".into_string()), TStringLiteral("string".into_string())), tk, "object declaration"))
+                        _ => return Err(vec!(TIdentifier("identifier".into_string()), TStringLiteral("string".into_string()), tk, "object declaration"))
                     };
                     self.pos += 1;
                     try!(self.expect(TPunctuator(PColon), "object declaration"));
@@ -370,7 +393,7 @@ impl Parser {
             self.parse_next(expr)
         }
     }
-    fn get_token(&self, pos:uint) -> Result<Token, ParseError> {
+    fn get_token(&self, pos:u64) -> Result<Token, ParseError> {
         if pos < self.tokens.len() {
             Ok(self.tokens[pos].clone())
         } else {

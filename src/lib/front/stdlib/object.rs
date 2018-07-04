@@ -1,12 +1,12 @@
 use front::stdlib::value::{Value, ResultValue, ToValue, FromValue, to_value, from_value};
 use front::stdlib::function::Function;
-use collections::treemap::TreeMap;
+use std::collections::btree_map::BTreeMap;
 pub static PROTOTYPE: &'static str = "prototype";
 pub static INSTANCE_PROTOTYPE: &'static str = "__proto__";
-#[deriving(Clone)]
-pub type ObjectData = TreeMap<String, Property>;
+//#[derive(Clone)]
+pub type ObjectData = BTreeMap<String, Property>;
 
-#[deriving(Clone)]
+#[derive(Clone)]
 /// A Javascript property
 pub struct Property {
     /// If the type of this can be changed and this can be deleted

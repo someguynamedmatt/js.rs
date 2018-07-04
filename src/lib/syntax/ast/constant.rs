@@ -1,6 +1,7 @@
-use std::fmt::{Formatter, Result, Show};
+use std::fmt::{Formatter, Result, Display};
+use syntax::ast::constant::Const::*;
 
-#[deriving(Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 /// A Javascript constant
 pub enum Const {
     /// A UTF-8 string, such as `"Hello, world"`
@@ -18,7 +19,7 @@ pub enum Const {
     /// The `undefined` value, which represents a field or index that doesn't exist
     CUndefined
 }
-impl Show for Const {
+impl Display for Const {
     fn fmt(&self, f: &mut Formatter) -> Result {
         return match *self {
             CString(ref st) => write!(f, "\"{}\"", st),

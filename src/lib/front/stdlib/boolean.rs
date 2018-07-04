@@ -1,4 +1,5 @@
-use front::stdlib::value::{Value, VUndefined, ResultValue};
+use front::stdlib::value::{Value, ResultValue};
+use front::stdlib::value::ValueData::*;
 use front::stdlib::function::Function;
 
 /// Create a new boolean

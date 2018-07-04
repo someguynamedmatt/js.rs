@@ -1,32 +1,39 @@
 use front::stdlib::object::{PROTOTYPE, INSTANCE_PROTOTYPE, ObjectData, Property};
+use serialize::json::from_str;
 use front::stdlib::function::Function;
-use collections::TreeMap;
-use serialize::json::{ToJson, Json, Number, String, Boolean, List, Object, Null};
+use std::collections::btree_map::BTreeMap;
+use std::cmp::Ordering;
+use std::ops::*;
+use serialize::json::Json::*;
+use std::string::String;
+use serialize::json::{ToJson, Json, Object};
 use std::fmt;
 use std::ops::{Add, Sub, Mul, Div, Rem, BitAnd, BitOr, BitXor};
 use std::f64;
+use front::stdlib::value::ValueData::*;
 use std::gc::{Gc, GC};
-use std::c_str::CString;
+use std::ffi::CString;
 use std::cell::RefCell;
 use std::iter::FromIterator;
 use std::cmp::PartialOrd;
 use front::stdlib::*;
+use std::ops::Deref;
 #[must_use]
 /// The result of a Javascript expression is represented like this so it can succeed (`Ok`) or fail (`Err`)
 pub type ResultValue = Result<Value, Value>;
-#[deriving(Clone)]
+#[derive(Clone)]
 /// A Garbage-collected Javascript value as represented in the interpreter
 pub struct Value {
     /// The garbage-collected pointer
     pub ptr: Gc<ValueData>
 }
-impl Deref<ValueData> for Value {
+impl Deref for Value {
     #[inline]
     fn deref<'a>(&'a self) -> &'a ValueData {
         &**self
     }
 }
-#[deriving(Clone)]
+#[derive(Clone)]
 /// A Javascript value
 pub enum ValueData {
     /// `null` - A null value, for when a value doesn't exist
@@ -51,7 +58,7 @@ impl Value {
     /// Move some value data into a new value
     pub fn new(data: ValueData) -> Value {
         Value {
-            ptr: box(GC) data
+            ptr: box(GC)
         }
     }
     /// Create a new global object
@@ -72,7 +79,7 @@ impl Value {
     }
     /// Returns a new empty object
     pub fn new_obj(global: Option<Value>) -> Value {
-        let mut obj : ObjectData = TreeMap::new();
+        let mut obj : ObjectData = BTreeMap::new();
         if global.is_some() {
             let obj_proto = global.unwrap().get_field("Object").get_field(PROTOTYPE);
             obj.insert(INSTANCE_PROTOTYPE.into_string(), Property::new(obj_proto));
@@ -169,7 +176,7 @@ impl Value {
         match obj.find(&field.into_string()) {
             Some(val) => Some(*val),
             None => match obj.find(&PROTOTYPE.into_string()) {
-                Some(prop) => 
+                Some(prop) =>
                     prop.value.get_prop(field),
                 None => None
             }
@@ -211,13 +218,13 @@ impl Value {
     /// Convert from a JSON value to a JS value
     pub fn from_json(json:Json) -> ValueData {
         match json {
-            Number(v) => VNumber(v),
+            Number::from_f64(v) => VNumber(v),
             String(v) => VString(v),
             Boolean(v) => VBoolean(v),
-            List(vs) => {
-                let mut i = 0u;
+            Array(vs) => {
+                let mut i = 0;
                 let mut data : ObjectData = FromIterator::from_iter(vs.iter().map(|json| {
-                    i += 1u;
+                    i += 1;
                     ((i - 1).to_string(), Property::new(to_value(json.clone())))
                 }));
                 data.insert("length".into_string(), Property::new(to_value(vs.len() as i32)));
@@ -248,7 +255,7 @@ impl Value {
         Value::new(VUndefined)
     }
 }
-impl fmt::Show for Value {
+impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match **self {
             VNull => write!(f, "null"),
@@ -304,7 +311,7 @@ impl ToJson for Value {
             VNull | VUndefined => Null,
             VBoolean(b) => Boolean(b),
             VObject(ref obj) => {
-                let mut nobj = TreeMap::new();
+                let mut nobj = BTreeMap::new();
                 for (k, v) in obj.borrow().iter() {
                     if k.as_slice() != INSTANCE_PROTOTYPE.as_slice() {
                         nobj.insert(k.clone(), v.value.to_json());
@@ -319,7 +326,7 @@ impl ToJson for Value {
         }
     }
 }
-impl Add<Value, Value> for Value {
+impl Add for Value {
     fn add(&self, other:&Value) -> Value {
         if self.is_string() || other.is_string() {
             let text = self.to_string().append(other.to_string().as_slice());
@@ -329,57 +336,57 @@ impl Add<Value, Value> for Value {
         }
     }
 }
-impl Sub<Value, Value> for Value {
+impl Sub for Value {
     fn sub(&self, other:&Value) -> Value {
         to_value(self.to_num() - other.to_num())
     }
 }
-impl Mul<Value, Value> for Value {
+impl Mul for Value {
     fn mul(&self, other:&Value) -> Value {
         to_value(self.to_num() * other.to_num())
     }
 }
-impl Div<Value, Value> for Value {
+impl Div for Value {
     fn div(&self, other:&Value) -> Value {
         to_value(self.to_num() / other.to_num())
     }
 }
-impl Rem<Value, Value> for Value {
+impl Rem for Value {
     fn rem(&self, other:&Value) -> Value {
         to_value(self.to_num() % other.to_num())
     }
 }
-impl BitAnd<Value, Value> for Value {
+impl BitAnd for Value {
     fn bitand(&self, other:&Value) -> Value {
         to_value(self.to_int() & other.to_int())
     }
 }
-impl BitOr<Value, Value> for Value {
+impl BitOr for Value {
     fn bitor(&self, other:&Value) -> Value {
         to_value(self.to_int() | other.to_int())
     }
 }
-impl BitXor<Value, Value> for Value {
+impl BitXor for Value {
     fn bitxor(&self, other:&Value) -> Value {
         to_value(self.to_int() ^ other.to_int())
     }
 }
-impl Shl<Value, Value> for Value {
+impl Shl for Value {
     fn shl(&self, other:&Value) -> Value {
-        to_value(self.to_int() << other.to_int() as uint)
+        to_value(self.to_int() << other.to_int() as u64)
     }
 }
-impl Shr<Value, Value> for Value {
+impl Shr for Value {
     fn shr(&self, other:&Value) -> Value {
-        to_value(self.to_int() >> other.to_int() as uint)
+        to_value(self.to_int() >> other.to_int() as u64)
     }
 }
-impl Not<Value> for Value {
+impl Not for Value {
     fn not(&self) -> Value {
         to_value(!self.is_true())
     }
 }
-impl Neg<Value> for Value {
+impl Neg for Value {
     fn neg(&self) -> Value {
         to_value(-self.to_num())
     }
@@ -492,8 +499,8 @@ impl<T:ToValue> ToValue for Vec<T> {
 impl<T:FromValue> FromValue for Vec<T> {
     fn from_value(v:Value) -> Result<Vec<T>, &'static str> {
         let len = v.get_field("length").to_int();
-        let mut vec = Vec::with_capacity(len as uint);
-        for i in range(0, len) {
+        let mut vec = Vec::with_capacity(len as u64);
+        for i in 0..len {
             vec.push(try!(from_value(v.get_field(i.to_string().as_slice()))))
         }
         Ok(vec)

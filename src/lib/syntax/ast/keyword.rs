@@ -1,6 +1,7 @@
-use std::fmt::{Formatter, Result, Show};
-use std::from_str::FromStr;
-#[deriving(Clone, PartialEq)]
+use std::fmt::{Formatter, Result, Display};
+use syntax::ast::keyword::Keyword::*;
+use std::str::FromStr;
+#[derive(Clone, PartialEq)]
 /// A Javascript Keyword
 pub enum Keyword {
     /// The `break` keyword
@@ -104,7 +105,7 @@ impl FromStr for Keyword {
         }
     }
 }
-impl Show for Keyword {
+impl Display for Keyword {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "{}", match *self {
             KBreak => "break",

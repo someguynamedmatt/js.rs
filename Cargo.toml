@@ -1,8 +1,8 @@
-[project]
+[package]
 
 name = "js"
 version = "0.0.1"
-authors = ["Tom Bebbington <tophattedcoder@gmail.com>"]
+authors = ["Matt <dev@mttyng.com>"]
 
 [lib]
 
@@ -14,8 +14,10 @@ path = "src/lib/lib.rs"
 name = "js"
 path = "src/bin/bin.rs"
 
-[dependencies.jit]
-git = "https://github.com/TomBebbington/jit.rs.git"
-
-[dependencies.url]
-git = "https://github.com/servo/rust-url"
+[dependencies]
+url = "1.7.0"
+rand = "0.3.1"
+time = "0.1"
+log = "0.3.6"
+percent-encoding = "1.0.1"
+llvm-rs = { path ="../llvm-rs"}

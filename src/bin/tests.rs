@@ -1,4 +1,4 @@
-use collections::treemap::TreeMap;
+use std::collections::btree_map::BTreeMap;
 use js::back::compiler::JitCompiler;
 use js::back::executor::JitExecutor;
 use js::front::run::compiler::Compiler;
@@ -12,8 +12,8 @@ use jit::Context;
 use std::default::Default;
 use std::io::{BufferedReader, File};
 use std::io::fs::walk_dir;
-fn find_attrs(tokens: Vec<Token>) -> TreeMap<String, String> {
-    let mut map = TreeMap::new();
+fn find_attrs(tokens: Vec<Token>) -> BTreeMap<String, String> {
+    let mut map = BTreeMap::new();
     for tk in tokens.iter() {
         match tk.data {
             TComment(ref comm) => {

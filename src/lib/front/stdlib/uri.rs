@@ -1,6 +1,7 @@
 use front::stdlib::value::{Value, ResultValue, to_value};
 use front::stdlib::function::Function;
-use url::{DEFAULT_ENCODE_SET, utf8_percent_encode, lossy_utf8_percent_decode};
+use std::string::String::*;
+use url::percent_encoding::{DEFAULT_ENCODE_SET, utf8_percent_encode};
 
 /// Encode a URI
 pub fn encode_uri(args:Vec<Value>, _:Value, _:Value, _:Value) -> ResultValue {

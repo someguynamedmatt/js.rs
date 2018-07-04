@@ -1,10 +1,11 @@
 use front::stdlib::object::{ObjectData, Property};
-use front::stdlib::value::{Value, VFunction, ResultValue, to_value};
-use collections::treemap::TreeMap;
+use front::stdlib::value::{Value, ResultValue, to_value};
+use front::stdlib::value::ValueData::*;
+use std::collections::btree_map::BTreeMap;
 use std::iter::FromIterator;
 use std::cell::RefCell;
 pub type FunctionData = fn(Vec<Value>, Value, Value, Value) -> ResultValue;
-#[deriving(Clone)]
+#[derive(Clone)]
 /// A Javascript function
 pub struct Function {
     /// The fields associated with the function
@@ -17,7 +18,7 @@ pub struct Function {
 impl Function {
     /// Make a new function
     pub fn new(repr : FunctionData, args: Vec<String>) -> Function {
-        let mut obj = TreeMap::new();
+        let mut obj = BTreeMap::new();
         obj.insert("arguments".into_string(), Property::new(to_value(args.len() as i32)));
         Function {object: obj, repr: repr, args: args}
     }
@@ -32,7 +33,7 @@ impl Function {
 }
 /// Create a new `Function` object
 pub fn _create(_ : Value) -> Value {
-    let function : ObjectData = TreeMap::new();
+    let function : ObjectData = BTreeMap::new();
     to_value(function)
 }
 /// Initialise the global object with the `Function` object

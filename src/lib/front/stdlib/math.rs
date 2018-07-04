@@ -1,6 +1,6 @@
 use front::stdlib::value::{Value, ResultValue, to_value, from_value};
 use front::stdlib::function::Function;
-use std::rand::random;
+use rand::random;
 use std::f64;
 
 /// Get the absolute value of a number

@@ -1,17 +1,25 @@
-use std::fmt::{Formatter, Result, Show};
+use std::fmt::{Formatter, Result, Display};
+use syntax::ast::op::UnaryOp::*;
+use syntax::ast::expr::ExprDef::*;
+use syntax::ast::op::CompOp::*;
+use syntax::ast::op::BitOp::*;
+use syntax::ast::op::NumOp::*;
+use syntax::ast::op::BinOp::*;
+use syntax::ast::keyword::Keyword::*;
+use syntax::ast::op::BinOp::*;
 /// Represents an operator
 pub trait Operator {
     /// Get the associativity as a boolean that is true if it goes rightwards
     fn get_assoc(&self) -> bool;
     /// Get the precedence as an unsigned integer, where the lower it is, the more precedence/priority it has
-    fn get_precedence(&self) -> uint;
+    fn get_precedence(&self) -> u64;
     #[inline(always)]
     /// Get the precedence and associativity of this operator
-    fn get_precedence_and_assoc(&self) -> (uint, bool) {
+    fn get_precedence_and_assoc(&self) -> (u64, bool) {
         (self.get_precedence(), self.get_assoc())
     }
 }
-#[deriving(Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 /// A numeric operation between 2 values
 pub enum NumOp {
     /// `a + b` - Addition
@@ -25,7 +33,7 @@ pub enum NumOp {
     /// `a % b` - Modulus
     OpMod
 }
-impl Show for NumOp {
+impl Display for NumOp {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "{}", match *self {
             OpAdd => "+",
@@ -36,7 +44,7 @@ impl Show for NumOp {
         })
     }
 }
-#[deriving(Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 /// A unary operation on a single value
 pub enum UnaryOp {
     /// `a++` - increment the value
@@ -54,7 +62,7 @@ pub enum UnaryOp {
     /// `!a` - get the opposite of the boolean value
     UnaryNot
 }
-impl Show for UnaryOp {
+impl Display for UnaryOp {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "{}", match *self {
             UnaryIncrementPost | UnaryIncrementPre => "++",
@@ -65,7 +73,7 @@ impl Show for UnaryOp {
         })
     }
 }
-#[deriving(Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 /// A bitwise operation between 2 values
 pub enum BitOp {
     /// `a & b` - Bitwise and
@@ -79,7 +87,7 @@ pub enum BitOp {
     /// `a >> b` - Bit-shift rightrights
     BitShr
 }
-impl Show for BitOp {
+impl Display for BitOp {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "{}", match *self {
             BitAnd => "&",
@@ -90,7 +98,7 @@ impl Show for BitOp {
         })
     }
 }
-#[deriving(Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 /// A comparitive operation between 2 values
 pub enum CompOp {
     /// `a == b` - Equality
@@ -110,7 +118,7 @@ pub enum CompOp {
     /// `a <= b` - If `a` is less than or equal to `b`
     CompLessThanOrEqual,
 }
-impl Show for CompOp {
+impl Display for CompOp {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "{}", match *self {
             CompEqual => "==",
@@ -124,7 +132,7 @@ impl Show for CompOp {
         })
     }
 }
-#[deriving(Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 /// A logical operation between 2 boolean values
 pub enum LogOp {
     /// `a && b` - Logical and
@@ -132,7 +140,7 @@ pub enum LogOp {
     /// `a || b` - Logical or
     LogOr
 }
-impl Show for LogOp {
+impl Display for LogOp {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "{}", match *self {
             LogAnd => "&&",
@@ -140,7 +148,7 @@ impl Show for LogOp {
         })
     }
 }
-#[deriving(Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 /// A binary operation between 2 values
 pub enum BinOp {
     /// Numeric operation
@@ -156,7 +164,7 @@ impl Operator for BinOp {
     fn get_assoc(&self) -> bool {
         true
     }
-    fn get_precedence(&self) -> uint {
+    fn get_precedence(&self) -> u64 {
         match *self {
             BinNum(OpMul) | BinNum(OpDiv) | BinNum(OpMod) => 5,
             BinNum(OpAdd) | BinNum(OpSub) => 6,
@@ -168,11 +176,11 @@ impl Operator for BinOp {
             BinBit(BitOr) => 12,
             BinLog(LogAnd) => 13,
             BinLog(LogOr) => 14,
-            
+
         }
     }
 }
-impl Show for BinOp {
+impl Display for BinOp {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "{}", match *self {
             BinNum(op) => op.to_string(),

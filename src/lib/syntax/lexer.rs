@@ -1,9 +1,13 @@
 use syntax::ast::punc::*;
 use syntax::ast::token::*;
-use std::io::{BufReader, BufferedReader, Buffer, IoError, IoResult, EndOfFile};
+use std::io::{Error, BufRead, BufReader};
 use std::char::from_u32;
-use std::num::from_str_radix;
-use std::from_str::FromStr;
+use std::num::*;
+use std::str::FromStr;
+use self::TokenData::*;
+use serialize::json::{from_str};
+use syntax::ast::punc::Punctuator::{PXor, PAssignXor, PStrictEq, PAssignRightSh, PGreaterThanOrEq, PLessThan, PLeftSh, PRightSh, PURightSh, PAssignURightSh, PNot, PNotEq, PStrictNotEq, PNeg, PGreaterThan, PAssignLeftSh, PArrow, PAssign, PLessThanOrEq};
+use syntax::ast::punc::Punctuator::*;
 macro_rules! vop(
     ($this:ident, $assign_op:expr, $op:expr) => ({
         let preview = try!($this.preview_next());
@@ -33,7 +37,7 @@ macro_rules! vop(
             _ => $op
         }
     });
-)
+);
 macro_rules! op(
     ($this:ident, $assign_op:expr, $op:expr) => ({
         let punc = vop!($this, $assign_op, $op);
@@ -47,19 +51,19 @@ macro_rules! op(
         let punc = vop!($this, $op, {$($case => $block),+});
         $this.push_punc();
     });
-)
+);
 /// A Javascript lexer
 pub struct Lexer<B> {
     /// The list of tokens generated so far
     pub tokens : Vec<Token>,
     /// The current line number in the script
-    line_number : uint,
+    line_number : u64,
     /// The current column number in the script
-    column_number : uint,
+    column_number : u64,
     /// The reader
     buffer: B
 }
-impl<B:Buffer> Lexer<B> {
+impl<B:BufRead> Lexer<B> {
     /// Creates a new lexer with empty buffers
     pub fn new(buffer: B) -> Lexer<B> {
         Lexer {
@@ -81,20 +85,20 @@ impl<B:Buffer> Lexer<B> {
     pub fn lex_str(script:&str) -> Vec<Token> {
         let script_bytes:&[u8] = script.as_bytes();
         let reader = BufReader::new(script_bytes);
-        let buf_reader = BufferedReader::new(reader);
+        let buf_reader = BufReader::new(reader);
         let mut lexer = Lexer::new(buf_reader);
         lexer.lex().unwrap();
         lexer.tokens
     }
     #[inline(always)]
-    fn next(&mut self) -> IoResult<char> {
+    fn next(&mut self) -> Result<char> {
         self.buffer.read_char()
     }
-    fn preview_next(&mut self) -> IoResult<char> {
+    fn preview_next(&mut self) -> Result<char> {
         let buf = try!(self.buffer.fill_buf());
         Ok(buf[0] as char)
     }
-    fn next_is(&mut self, peek:char) -> IoResult<bool> {
+    fn next_is(&mut self, peek:char) -> Result<bool> {
         let result = try!(self.preview_next()) == peek;
         if result {
             self.buffer.consume(1);
@@ -102,11 +106,11 @@ impl<B:Buffer> Lexer<B> {
         Ok(result)
     }
     /// Processes an input stream from the `buffer` into a vector of tokens
-    pub fn lex(&mut self) -> IoResult<()> {
+    pub fn lex(&mut self) -> Result<()> {
         loop {
             let ch = match self.next() {
                 Ok(ch) => ch,
-                Err(IoError {kind: EndOfFile, ..}) => break,
+                Err(Error {kind: EndOfFile, ..}) => break,
                 Err(err) => return Err(err)
             };
             self.column_number += 1;
@@ -133,36 +137,36 @@ impl<B:Buffer> Lexer<B> {
                                         '0' => '\0',
                                         'x' => {
                                             let mut nums = String::with_capacity(2);
-                                            for _ in range(0u8, 2) {
+                                            for _ in 0u8..2 {
                                                 nums.push_char(try!(self.next()));
                                             }
                                             self.column_number += 2;
-                                            let as_num = match from_str_radix(nums.as_slice(), 16) {
+                                            let as_num = match u64::from_str_radix(nums.as_slice(), 16) {
                                                 Some(v) => v,
                                                 None => 0
                                             };
                                             match from_u32(as_num) {
                                                 Some(v) => v,
-                                                None => fail!("{}:{}: {} is not a valid unicode scalar value", self.line_number, self.column_number, as_num)
+                                                None => panic!("{}:{}: {} is not a valid unicode scalar value", self.line_number, self.column_number, as_num)
                                             }
                                         },
                                         'u' => {
                                             let mut nums = String::new();
-                                            for _ in range(0u8, 4) {
+                                            for _ in 0u8..4 {
                                                 nums.push_char(try!(self.next()));
                                             }
                                             self.column_number += 4;
-                                            let as_num = match from_str_radix(nums.as_slice(), 16) {
+                                            let as_num = match u64::from_str_radix(nums.as_slice(), 16) {
                                                 Some(v) => v,
                                                 None => 0
                                             };
                                             match from_u32(as_num) {
                                                 Some(v) => v,
-                                                None => fail!("{}:{}: {} is not a valid unicode scalar value", self.line_number, self.column_number, as_num)
+                                                None => panic!("{}:{}: {} is not a valid unicode scalar value", self.line_number, self.column_number, as_num)
                                             }
                                         },
                                         '\'' | '"' => escape,
-                                        _ => fail!("{}:{}: Invalid escape `{}`", self.line_number, self.column_number, ch)
+                                        _ => panic!("{}:{}: Invalid escape `{}`", self.line_number, self.column_number, ch)
                                     };
                                     buf.push_char(escaped_ch);
                                 }
@@ -185,7 +189,7 @@ impl<B:Buffer> Lexer<B> {
                                 _ => break
                             }
                         }
-                        from_str_radix(buf.as_slice(), 16).unwrap()                  
+                        u64::from_str_radix(buf.as_slice(), 16).unwrap()
                     } else {
                         let mut gone_decimal = false;
                         loop {
@@ -207,7 +211,7 @@ impl<B:Buffer> Lexer<B> {
                         if gone_decimal {
                             from_str(buf.as_slice())
                         } else {
-                            from_str_radix(buf.as_slice(), 8)
+                            u64::from_str_radix(buf.as_slice(), 8)
                         }.unwrap()
                     };
                     self.push_token(TNumericLiteral(num))
@@ -269,7 +273,7 @@ impl<B:Buffer> Lexer<B> {
                     let token = match try!(self.preview_next()) {
                         '/' => {
                             let comment = try!(self.buffer.read_line());
-                            TComment(comment.as_slice().slice_to(comment.len() - 1).into_string())
+                            TokenData::TComment(comment.as_slice().slice_to(comment.len() - 1).into_string())
                         },
                         '*' => {
                             let mut buf = String::new();
@@ -285,10 +289,10 @@ impl<B:Buffer> Lexer<B> {
                                         buf.push_char(ch)
                                 }
                             }
-                            TComment(buf)
+                            TokenData::TComment(buf)
                         },
-                        '=' => TPunctuator(PAssignDiv),
-                        _ => TPunctuator(PDiv)
+                        '=' => TokenData::TPunctuator(PAssignDiv),
+                        _ => TokenData::TPunctuator(PDiv)
                     };
                     self.push_token(token)
                 },
@@ -324,15 +328,15 @@ impl<B:Buffer> Lexer<B> {
                 }),
                 '!' => op!(self, vop!(self, PStrictNotEq, PNotEq), PNot),
                 '~' => self.push_punc(PNeg),
-                '\n' | '\u2028'|'\u2029' => {
+                '\n' | '\u{2028}' | '\u{2029}' => {
                     self.line_number += 1;
                     self.column_number = 0;
                 },
                 '\r' => {
                     self.column_number = 0;
                 },
-                ' ' => (),
-                ch => fail!("{}:{}: Unexpected '{}'", self.line_number, self.column_number, ch)
+                " " => (),
+                ch => panic!("{}:{}: Unexpected '{}'", self.line_number, self.column_number, ch)
             };
         };
         Ok(())

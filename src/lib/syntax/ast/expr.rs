@@ -1,9 +1,11 @@
-use std::fmt::{Formatter, Result, Show};
+use std::fmt::{Formatter, Result, Display};
+use syntax::ast::op::UnaryOp::*;
 use syntax::ast::op::*;
+use syntax::ast::expr::ExprDef::*;
 use syntax::ast::constant::Const;
 use syntax::ast::pos::Position;
-use collections::treemap::TreeMap;
-#[deriving(Clone, PartialEq)]
+use std::collections::btree_map::BTreeMap;
+#[derive(Clone, PartialEq)]
 /// A Javascript expression, including its position
 pub struct Expr {
     /// The expression definition
@@ -19,12 +21,12 @@ impl Expr {
         Expr{def: def, start: start, end: end}
     }
 }
-impl Show for Expr {
+impl Display for Expr {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "{}", self.def)
     }
 }
-#[deriving(Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 /// A Javascript expression
 pub enum ExprDef {
     /// Run a operation between 2 expressions
@@ -50,7 +52,7 @@ pub enum ExprDef {
     /// Run blocks whose cases match the expression
     SwitchExpr(Box<Expr>, Vec<(Expr, Vec<Expr>)>, Option<Box<Expr>>),
     /// Create an object out of the binary tree given
-    ObjectDeclExpr(Box<TreeMap<String, Expr>>),
+    ObjectDeclExpr(Box<BTreeMap<String, Expr>>),
     /// Create an array with items inside
     ArrayDeclExpr(Vec<Expr>),
     /// Create a function with the given name, arguments, and expression
@@ -77,7 +79,7 @@ impl Operator for ExprDef {
             _ => true
         }
     }
-    fn get_precedence(&self) -> uint {
+    fn get_precedence(&self) -> u64 {
         match *self {
             GetFieldExpr(_, _) | GetConstFieldExpr(_, _) => 1,
             CallExpr(_, _) | ConstructExpr(_, _) => 2,
@@ -91,7 +93,7 @@ impl Operator for ExprDef {
         }
     }
 }
-impl Show for ExprDef {
+impl Display for ExprDef {
     fn fmt(&self, f: &mut Formatter) -> Result {
         return match *self {
             ConstExpr(ref c) => write!(f, "{}", c),

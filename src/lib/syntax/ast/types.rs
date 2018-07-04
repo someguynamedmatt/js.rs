@@ -1,5 +1,5 @@
-use std::fmt::{Formatter, Result, Show};
-#[deriving(Clone, PartialEq)]
+use std::fmt::{Formatter, Result, Display};
+#[derive(Clone, PartialEq)]
 #[repr(u8)]
 /// Represents a Javascript type at parsing/compilation
 pub enum Type {
@@ -26,6 +26,7 @@ pub enum Type {
     /// Any type
     AnyType
 }
+use self::Type::*;
 impl Type {
     /// Normalise the type
     pub fn normalise(&mut self) {
@@ -35,7 +36,7 @@ impl Type {
         }
     }
 }
-impl Show for Type {
+impl Display for Type {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match *self {
             UndefinedType =>

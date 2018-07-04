@@ -2,6 +2,11 @@ use syntax::ast::expr::*;
 use syntax::ast::types::*;
 use syntax::ast::constant::*;
 use syntax::ast::op::*;
+use syntax::ast::types::Type::*;
+use syntax::ast::expr::ExprDef::*;
+use syntax::ast::op::BinOp::*;
+use syntax::ast::constant::Const::*;
+use syntax::ast::op::UnaryOp::*;
 
 /// Type an expression
 pub fn resolve_type(expr:&Expr) -> Type {
