@@ -105,7 +105,7 @@ pub fn _create(global:Value) -> Value {
         "toString": Function::make(to_string, [])
     });
     js_extend!(object, {
-        "length": 1i32,
+        "length": i32,
         PROTOTYPE: prototype,
         "setPrototypeOf": Function::make(get_proto_of, ["object", "prototype"]),
         "getPrototypeOf": Function::make(get_proto_of, ["object"]),

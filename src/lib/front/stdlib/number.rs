@@ -75,6 +75,7 @@ pub fn _create(global:Value) -> Value {
 }
 /// Initialise the parse functions and `Number` on the global object
 pub fn init(global:Value) {
+    //TODO: Fix this. the macro will have to be generalized for multiples
     js_extend!(global, {
         "NaN": NAN,
         "Infinity": INFINITY,
