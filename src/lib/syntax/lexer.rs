@@ -91,14 +91,14 @@ impl<B:BufRead> Lexer<B> {
         lexer.tokens
     }
     #[inline(always)]
-    fn next(&mut self) -> Result<char> {
+    fn next(&mut self) -> Result<char, ()> {
         self.buffer.read_char()
     }
-    fn preview_next(&mut self) -> Result<char> {
+    fn preview_next(&mut self) -> Result<char, ()> {
         let buf = try!(self.buffer.fill_buf());
         Ok(buf[0] as char)
     }
-    fn next_is(&mut self, peek:char) -> Result<bool> {
+    fn next_is(&mut self, peek:char) -> Result<bool, ()> {
         let result = try!(self.preview_next()) == peek;
         if result {
             self.buffer.consume(1);
@@ -106,7 +106,7 @@ impl<B:BufRead> Lexer<B> {
         Ok(result)
     }
     /// Processes an input stream from the `buffer` into a vector of tokens
-    pub fn lex(&mut self) -> Result<()> {
+    pub fn lex(&mut self) -> Result<(), ()> {
         loop {
             let ch = match self.next() {
                 Ok(ch) => ch,

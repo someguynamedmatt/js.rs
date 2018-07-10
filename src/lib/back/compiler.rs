@@ -51,11 +51,11 @@ impl<'a> JitCompiler<'a> {
                 convert(not_zero & not_nan)
             },
             Int | UInt | NInt | NUInt => {
-                let zero = i.compile(&self.curr);
+                let zero = 0.compile(&self.curr);
                 convert(self.curr.insn_neq(&val, &zero))
             },
             Pointer => {
-                let one = i.compile(&self.curr);
+                let one = 1.compile(&self.curr);
                 convert(self.curr.insn_gt(&val, &one))
             },
             _ => convert(val)

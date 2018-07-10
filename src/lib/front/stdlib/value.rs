@@ -18,6 +18,7 @@ use std::iter::FromIterator;
 use std::cmp::PartialOrd;
 use front::stdlib::*;
 use std::ops::Deref;
+use serde_json::value::{Number};
 #[must_use]
 /// The result of a Javascript expression is represented like this so it can succeed (`Ok`) or fail (`Err`)
 pub type ResultValue = Result<Value, Value>;
@@ -320,8 +321,11 @@ impl ToJson for Value {
                 Object(nobj)
             },
             VString(ref str) => String(str.clone()),
-            VNumber(num) => Number(num),
-            VInteger(val) => Number(val as f64),
+            //TODO remove comments (original code) if compilation succeeds
+            //VNumber(num) => Number(num),
+            VNumber(num) => Number::as_i64(num),
+            //VInteger(val) => Number(val as f64),
+            VInteger(val) => Number::as_f64(val),
             VFunction(_) => Null
         }
     }

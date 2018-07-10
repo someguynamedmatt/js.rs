@@ -18,6 +18,7 @@ extern crate rand;
 //#[phase(link)]
 //extern crate log;
 extern crate serialize;
+extern crate serde_json;
 extern crate time;
 extern crate url;
 /// The backend-defining traits and the Javascript standard library
