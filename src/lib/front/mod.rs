@@ -1,4 +1,4 @@
-#[macro_escape]
+#[macro_use]
 /// A macro which makes Javascript objects with pretty Rust syntax
 pub mod jsmacro;
 /// Backend-defining traits
